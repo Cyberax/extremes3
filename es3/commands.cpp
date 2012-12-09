@@ -529,12 +529,12 @@ int es3::do_publish(context_ptr context, const stringvec& params,
 	stringvec included, excluded;
 	opts.add_options()
 		("exclude-path,E", po::value<stringvec>(&excluded),
-			"Exclude the paths matching the pattern from deletion. "
+			"Exclude the paths matching the pattern from publication. "
 			"If set, all matching files will be excluded even if they match "
 			"one of the 'include-path' rules.")
 		("include-path,I", po::value<stringvec>(&included),
-			"Include the paths matching the pattern for deletion. "
-			"If set, only the matching paths will be deleted")
+			"Include the paths matching the pattern for publication. "
+			"If set, only the matching paths will be published")
 	;
 
 	if (help)
