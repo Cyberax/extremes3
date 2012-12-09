@@ -12,7 +12,7 @@
 using namespace es3;
 
 #define MINIMAL_BLOCK (1024*1024)
-#define COMPRESSION_THRESHOLD 10000000
+#define COMPRESSION_THRESHOLD 10000
 
 namespace es3
 {
