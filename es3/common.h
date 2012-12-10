@@ -32,16 +32,26 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <mutex>
+//#include <mutex>
+#include <boost/thread.hpp>
+#include <boost/thread/condition_variable.hpp>
 #include <stdexcept>
+
+#ifdef __MACH__
+#define lseek64 lseek
+#endif
 
 namespace es3 {
 	namespace bf = boost::filesystem;
 
 	void ES3LIB_LOCAL backtrace_it(void);
 
-	typedef std::lock_guard<std::mutex> guard_t;
-	typedef std::unique_lock<std::mutex> u_guard_t;
+//	typedef std::lock_guard<std::mutex> guard_t;
+//	typedef std::unique_lock<std::mutex> u_guard_t;
+	typedef boost::mutex mutex_t;
+	typedef boost::lock_guard<boost::mutex> guard_t;
+	typedef boost::unique_lock<boost::mutex> u_guard_t;
+	
 	typedef std::vector<std::string> stringvec;
 
 	ES3LIB_PUBLIC std::string int_to_string(int64_t in);

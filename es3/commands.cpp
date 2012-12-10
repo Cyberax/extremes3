@@ -409,10 +409,10 @@ class get_file_info: public sync_task,
 	const s3_path path_;
 	context_ptr context_;
 	std::map<s3_path, file_desc> &desc_map_;
-	std::mutex &mtx_;
+	mutex_t &mtx_;
 public:
 	get_file_info(const s3_path &path, context_ptr context,
-				  std::map<s3_path, file_desc> &desc, std::mutex &mtx) :
+				  std::map<s3_path, file_desc> &desc, mutex_t &mtx) :
 		path_(path), context_(context), desc_map_(desc), mtx_(mtx)
 	{
 	}
@@ -472,7 +472,7 @@ int es3::do_ls(context_ptr context, const stringvec& params,
 	if (cur->files_.size()>10)
 	{
 		std::map<s3_path, file_desc> desc_map;
-		std::mutex desc_mtx;	
+		mutex_t desc_mtx;	
 		for(auto iter=cur->files_.begin(); iter!=cur->files_.end();++iter)
 		{
 			sync_task_ptr tsk(new get_file_info(iter->second->absolute_name_,
@@ -529,12 +529,12 @@ int es3::do_publish(context_ptr context, const stringvec& params,
 	stringvec included, excluded;
 	opts.add_options()
 		("exclude-path,E", po::value<stringvec>(&excluded),
-			"Exclude the paths matching the pattern from deletion. "
+			"Exclude the paths matching the pattern from publication. "
 			"If set, all matching files will be excluded even if they match "
 			"one of the 'include-path' rules.")
 		("include-path,I", po::value<stringvec>(&included),
-			"Include the paths matching the pattern for deletion. "
-			"If set, only the matching paths will be deleted")
+			"Include the paths matching the pattern for publication. "
+			"If set, only the matching paths will be published")
 	;
 
 	if (help)

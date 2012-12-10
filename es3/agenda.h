@@ -3,7 +3,7 @@
 
 #include "common.h"
 #include <boost/enable_shared_from_this.hpp>
-#include <condition_variable>
+//#include <condition_variable>
 
 #define MIN_SEGMENT_SIZE (6*1024*1024)
 #define MAX_IN_FLIGHT 200
@@ -54,13 +54,13 @@ namespace es3 {
 
 	class agenda : public boost::enable_shared_from_this<agenda>
 	{
-		const std::map<task_type_e, size_t> class_limits_;
+		std::map<task_type_e, size_t> class_limits_;
 		const size_t max_segments_in_flight_, segment_size_;
 		const bool quiet_, final_quiet_;
 		struct timespec start_time_;
 
-		std::mutex m_; //This mutex protects the following data {
-		std::condition_variable condition_;
+		mutex_t m_; //This mutex protects the following data {
+		boost::condition_variable condition_;
 		typedef std::multimap<int64_t, sync_task_ptr> task_map_t;
 		typedef std::map<task_type_e, task_map_t> task_by_class_t;
 		typedef std::map<size_t, task_by_class_t> size_map_t;
@@ -70,7 +70,7 @@ namespace es3 {
 		size_t segments_in_flight_;
 		//}
 
-		std::mutex stats_m_; //This mutex protects the following data {
+		mutex_t stats_m_; //This mutex protects the following data {
 		size_t num_submitted_, num_done_, num_failed_;
 		std::map<std::string, std::pair<uint64_t, uint64_t> > progress_;
 		std::map<std::string, uint64_t> cur_stats_;
