@@ -59,7 +59,6 @@ namespace es3
 			delete seg;
 
 			u_guard_t guard(parent_->m_);
-			guard.lock();
 			assert(parent_->segments_in_flight_>0);
 			parent_->segments_in_flight_--;
 			parent_->condition_.notify_one();
