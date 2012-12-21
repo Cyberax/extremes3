@@ -444,7 +444,10 @@ void synchronizer::process_downloads(s3_directory_ptr remotes,
 		} else
 		{
 			if (shadowed)
-				local_file_deleter(cur_local_path)(agenda_ptr());
+            {
+                local_file_deleter del(cur_local_path);
+                del(agenda_ptr());
+            }
 
 			if (!new_dir)
 			{
