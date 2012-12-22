@@ -42,7 +42,10 @@ namespace es3 {
 	void schedule_recursive_publication(const s3_path &remote, 
 		context_ptr ctx, agenda_ptr ag, 
 		const stringvec &included, const stringvec &excluded, size_t *num);
-	
+    void schedule_recursive_list(const s3_path &remote,
+        context_ptr ctx, agenda_ptr ag,
+        const stringvec &included, const stringvec &excluded, size_t *num_files);
+
 }; //namespace es3
 
 #endif //UPLOADER_H

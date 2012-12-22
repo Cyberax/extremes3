@@ -570,3 +570,54 @@ void es3::schedule_recursive_publication(const s3_path &remote,
 												   num_files, included, excluded)));
 	}
 }
+
+class print_subdir_task : public sync_task,
+        public boost::enable_shared_from_this<print_subdir_task>
+{
+    s3_path dir_;
+    context_ptr ctx_;
+    size_t *result_;
+    const stringvec &included_;
+    const stringvec &excluded_;
+public:
+    print_subdir_task(const s3_path &dir, context_ptr ctx, size_t *result,
+                        const stringvec &included, const stringvec &excluded) :
+        dir_(dir), ctx_(ctx), result_(result),
+        included_(included), excluded_(excluded) {}
+
+    virtual void print_to(std::ostream &str)
+    {
+        str << "List dir " << dir_;
+    }
+
+    virtual task_type_e get_class() const { return taskUnbound; }
+
+    virtual void operator()(agenda_ptr agenda)
+    {
+        s3_connection conn(ctx_);
+        s3_directory_ptr ptr=conn.list_files_shallow(dir_, s3_directory_ptr(), false);
+        for(auto iter=ptr->subdirs_.begin();
+            iter!=ptr->subdirs_.end();++iter)
+        {
+            agenda->schedule(sync_task_ptr(
+                                  new print_subdir_task(iter->second->absolute_name_, ctx_, result_, included_, excluded_)));
+        }
+        for(auto iter=ptr->files_.begin(); iter!=ptr->files_.end();++iter)
+        {
+            s3_path remote_name = iter->second->absolute_name_;
+            file_desc mod=conn.find_mtime_and_size(remote_name);
+            std::cout << mod.mtime_
+                      << "\t"<< mod.raw_size_
+                      << "\t" << remote_name << std::endl;
+            (*result_)++;
+        }
+    }
+};
+
+void es3::schedule_recursive_list(const s3_path &remote,
+    context_ptr ctx, agenda_ptr ag,
+    const stringvec &included, const stringvec &excluded, size_t *num_files)
+{
+    s3_connection conn(ctx);
+    ag->schedule(sync_task_ptr(new print_subdir_task(remote, ctx, num_files, included, excluded)));
+}

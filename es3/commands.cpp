@@ -539,7 +539,7 @@ int es3::do_publish(context_ptr context, const stringvec& params,
 
 	if (help)
 	{
-		std::cout << "rm syntax: es3 publish [OPTIONS] <PATH>\n"
+        std::cout << "publish syntax: es3 publish [OPTIONS] <PATH>\n"
 				  << "where <PATH> is:\n"
 				  << "\t - Amazon S3 storage (in s3://<bucket>/path/ format)"
 				  << std::endl << std::endl;
@@ -597,4 +597,81 @@ int es3::do_publish(context_ptr context, const stringvec& params,
 	
 	std::cout<<"Total files published: " << num << std::endl;
 	return 0;	
+}
+
+int es3::do_lsr(context_ptr context, const stringvec& params,
+         agenda_ptr ag, bool help)
+{
+    po::options_description opts("recursive ls options", term_width);
+    stringvec included, excluded;
+    opts.add_options()
+        ("exclude-path,E", po::value<stringvec>(&excluded),
+            "Exclude the paths matching the pattern from listing. "
+            "If set, all matching files will be excluded even if they match "
+            "one of the 'include-path' rules.")
+        ("include-path,I", po::value<stringvec>(&included),
+            "Include the paths matching the pattern for listing. "
+            "If set, only the matching paths will be published")
+    ;
+
+    if (help)
+    {
+        std::cout << "recursive ls syntax: es3 lsr [OPTIONS] <PATH>\n"
+                  << "where <PATH> is:\n"
+                  << "\t - Amazon S3 storage (in s3://<bucket>/path/ format)"
+                  << std::endl << std::endl;
+        std::cout << opts;
+        return 0;
+    }
+
+    po::positional_options_description pos;
+    pos.add("<ARGS>", -1);
+    stringvec args;
+    opts.add_options()
+            ("<ARGS>", po::value<stringvec>(&args)->multitoken()->required())
+    ;
+    po::variables_map vm;
+    try
+    {
+        po::store(po::command_line_parser(params)
+            .options(opts).positional(pos).run(), vm);
+        po::notify(vm);
+    } catch(const boost::program_options::error &err)
+    {
+        std::cerr << "ERR: Failed to parse configuration options. Error: "
+                  << err.what() << "\n"
+                  << "Use --help for help\n";
+        return 2;
+    }
+    if (args.size()<1)
+    {
+        std::cerr << "ERR: At least one <PATH> must be specified.\n";
+        return 2;
+    }
+
+    s3_connection conn(context);
+
+    //Do recursive publication
+    size_t num=0;
+    for(auto iter=args.begin();iter!=args.end();++iter)
+    {
+        s3_path path = parse_path(*iter);
+        path.zone_=conn.find_region(path.bucket_);
+        schedule_recursive_list(path, context, ag, included, excluded, &num);
+    }
+
+    int res=ag->run();
+    if (res!=0)
+        return res;
+
+    if (ag->tasks_count())
+    {
+        ag->print_epilog(); //Print stats, so they're at least visible
+        std::cerr << "ERR: ";
+        ag->print_queue();
+        return 4;
+    }
+
+    std::cout<<"Total files listed: " << num << std::endl;
+    return 0;
 }
