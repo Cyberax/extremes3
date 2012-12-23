@@ -236,7 +236,7 @@ bool es3::should_compress(const bf::path &p, uint64_t sz)
 			|| ext==".htm" || ext==".html")
 		return false;
 
-	if (sz <= COMPRESSION_THRESHOLD)
+    if (sz <= COMPRESSION_THRESHOLD || sz <= MINIMAL_BLOCK)
 		return false;
 
 	//Check for GZIP magic
