@@ -3,6 +3,7 @@
 #include "sync.h"
 #include <iostream>
 #include <boost/program_options.hpp>
+#include "errors.h"
 
 using namespace es3;
 namespace po = boost::program_options;
@@ -674,4 +675,72 @@ int es3::do_lsr(context_ptr context, const stringvec& params,
 
     std::cout<<"Total files listed: " << num << std::endl;
     return 0;
+}
+
+int es3::do_mass_rm(context_ptr context, const stringvec& params,
+         agenda_ptr ag, bool help)
+{
+    if (help)
+    {
+        std::cout << "mass rm syntax: cat file | es3 mass_rm"
+                  << std::endl << std::endl;
+        return 0;
+    }
+
+    s3_connection conn(context);
+
+    std::string path, zone;
+    while(std::getline(std::cin, path))
+    {
+        s3_path remote = parse_path(path);
+        if (!zone.empty())
+            remote.zone_=zone;
+        else
+        {
+            zone=remote.zone_=conn.find_region(remote.bucket_);
+        }
+
+        bool fail=true;
+        for(int f=0;f<3;++f)
+        {
+            try
+            {
+                conn.read_fully("DELETE", remote);
+                fail=false;
+                break;
+            } catch (const es3::es3_exception &ex)
+            {
+                const result_code_t &code = ex.err();
+                if (code.code()==errNone)
+                {
+                    VLOG(2) << "INFO: " << ex.what();
+                    sleep(5);
+                    continue;
+                } else if (code.code()==errWarn)
+                {
+                    VLOG(1) << "WARN: " << ex.what();
+                    sleep(5);
+                    continue;
+                } else
+                {
+                    VLOG(0) << ex.what();
+                    break;
+                }
+            } catch(const std::exception &ex)
+            {
+                VLOG(0) << "ERR: " << ex.what();
+                break;
+            } catch(...)
+            {
+                VLOG(0) << "Unknown exception. Skipping";
+                break;
+            }
+
+        }
+        if (fail)
+            return 2;
+    }
+
+    return 0;
+
 }
