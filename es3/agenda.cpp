@@ -192,7 +192,7 @@ namespace es3
 						} else if (code.code()==errWarn)
 						{
 							VLOG(1) << "WARN: " << ex.what();
-							sleep(5);
+                            sleep(10);
 							continue;
 						} else
 						{
