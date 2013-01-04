@@ -7,7 +7,7 @@
 #include <boost/bind.hpp>
 #include <time.h>
 #include <iostream>
-
+#include <sys/types.h>
 
 #ifdef __MACH__
 #include <mach/clock.h>
@@ -191,7 +191,7 @@ namespace es3
 							continue;
 						} else if (code.code()==errWarn)
 						{
-							VLOG(1) << "WARN: " << ex.what();
+                            VLOG(1) << gettid() << "WARN: " << ex.what();
                             sleep(10);
 							continue;
 						} else
