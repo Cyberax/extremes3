@@ -95,7 +95,7 @@ namespace es3 {
 							   const s3_path &path,
 							   const std::string &args="",
 							   const header_map_t &opts=header_map_t());
-		std::string upload_data(const s3_path &path,
+        std::string upload_data(const s3_path &path, const std::string &upload_id, int part_num,
 								const char *data, size_t size,
 								const header_map_t& opts=header_map_t());
 		void download_data(const s3_path &path,
@@ -116,6 +116,7 @@ namespace es3 {
 		
 		void set_acl(const s3_path &path, const std::string &acl);
 	private:
+        bool check_part(const std::string &doc, int part_num);
 		void checked(curl_ptr_t curl, int curl_code);
 		void check_for_errors(curl_ptr_t curl,
 							  const std::string &curl_res);
