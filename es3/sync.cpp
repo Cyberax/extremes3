@@ -275,14 +275,27 @@ bool synchronizer::create_schedule(bool check_mode, bool delete_mode,
 	VLOG(1)<<"Preparing S3 file list.";
 	std::vector<s3_directory_ptr> remote_lists;
     mutex_t m;
-	for(auto iter=remote_.begin();iter!=remote_.end();++iter)
-	{
-        agenda_->schedule(sync_task_ptr(
-                              new prepare_remote_list(ctx_, do_upload_, delete_mode, *iter,
-                                                      remote_lists, m)));
-	}
-	agenda_->run();
-	VLOG(1)<<"Preparing file list - done.";
+    for (int f=0;f<3;++f)
+    {
+        remote_lists.clear();
+        for(auto iter=remote_.begin();iter!=remote_.end();++iter)
+        {
+            agenda_->schedule(sync_task_ptr(
+                                  new prepare_remote_list(ctx_, do_upload_, delete_mode, *iter,
+                                                          remote_lists, m)));
+        }
+        int res=agenda_->run();
+        if (!res)
+            break;
+    }
+    if (agenda_->tasks_count())
+    {
+        agenda_->print_epilog(); //Print stats, so they're at least visible
+        std::cerr << "ERR: ";
+        agenda_->print_queue();
+        return 4;
+    }
+    VLOG(1)<<"Preparing file list - done.";
 
 	ctx_->reset(); //Reset CURLs	
 	if (delete_mode)
