@@ -63,11 +63,8 @@ public:
 		pthread_setschedparam(pthread_self(), SCHED_RR, &param);
 
 		s3_path part_path=content_->remote_;
-		part_path.path_+="?partNumber="+int_to_string(num_+1)
-				+"&uploadId="+content_->upload_id_;
-
 		s3_connection up(content_->conn_);
-		std::string etag=up.upload_data(part_path,
+        std::string etag=up.upload_data(part_path, content_->upload_id_, num_+1,
 										&segment_->data_[0],
 										segment_->data_.size());
 		assert(!etag.empty());

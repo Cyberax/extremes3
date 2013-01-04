@@ -217,7 +217,7 @@ int es3::do_touch(context_ptr context, const stringvec& params,
 		s3_directory_ptr ptr=conn.list_files_shallow(path,
 													 s3_directory_ptr(), true);
 		if (ptr->subdirs_.empty() && ptr->files_.empty())
-			conn.upload_data(path, "", 0);
+            conn.upload_data(path, "", 0, "", 0);
 		return 0;
 	} else
 	{
