@@ -337,7 +337,7 @@ s3_directory_ptr s3_connection::list_files_shallow(const s3_path &path,
 				}
 			} else if (strcmp(node->Value(), "CommonPrefixes")==0)
 			{
-				name = node->FirstChild("Prefix")->
+                name = node->FirstChild("Prefix")->
 						FirstChild()->ToText()->Value();
 				//Trim trailing '/'
 				std::string trimmed_name=name.substr(0, name.size()-1);
@@ -562,7 +562,7 @@ std::string s3_connection::initiate_multipart(
 	const s3_path &path, const header_map_t &opts)
 {
 	s3_path up_path =path;
-	up_path.path_+="?uploads";
+    up_path.path_+="?uploads";
 	std::string list=read_fully("POST", up_path, "", opts);
 
 	TiXmlDocument doc;
@@ -576,8 +576,31 @@ std::string s3_connection::initiate_multipart(
 			.FirstChild()
 			.ToText();
 	if (!node)
-		err(errWarn) << "Incorrect document format - no upload ID";
-	return node->Value();
+		err(errWarn) << "Incorrect document format - no upload ID";	
+    std::string uploadId=node->Value();
+
+    std::string cur_uploads=read_fully("GET", up_path, "", opts);
+    TiXmlDocument cur_uploads_xml;
+    cur_uploads_xml.Parse(cur_uploads.c_str());
+    if (cur_uploads_xml.Error())
+        err(errWarn) << "Failed to initiate multipart to " << path;
+    TiXmlHandle curDocHandle(&cur_uploads_xml);
+
+    TiXmlNode *cur_node=curDocHandle.FirstChild("ListMultipartUploadsResult")
+            .FirstChild("Upload").ToNode();
+    if (!cur_node)
+        err(errWarn) << "Incorrect document format - no upload ID";
+    while(cur_node)
+    {
+        TiXmlHandle upHandle(cur_node);
+        std::string val=upHandle.FirstChild("UploadId").ToText()->ValueStr();
+        if (val==uploadId)
+            return uploadId;
+
+        cur_node=cur_node->NextSibling();
+    }
+
+    err(errWarn) << "Can't find an active upload with id="<<uploadId;
 }
 
 std::string s3_connection::complete_multipart(const s3_path &path,
