@@ -518,10 +518,9 @@ std::string s3_connection::upload_data(const s3_path &path, const std::string &u
 
     if (part_num!=0 && !upload_id.empty())
     {
-        s3_path chk_path=path;
-        chk_path.path_+=std::string("?uploadId=")+upload_id+"&part-number​-marker="+int_to_string(part_num-1)+
+        std::string args=std::string("?uploadId=")+upload_id+"&part-number​-marker="+int_to_string(part_num-1)+
                 "&max-parts=1";
-        std::string ans=read_fully("GET", chk_path);
+        std::string ans=read_fully("GET", path, args);
 
         if (!check_part(ans, part_num))
             err(errWarn) << "Failed to get information about part "<< int_to_string(part_num) << " for upload " << path;
