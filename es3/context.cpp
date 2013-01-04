@@ -2,7 +2,7 @@
 #include <curl/curl.h>
 #include "errors.h"
 
-#define MAX_CURL_REUSE_COUNT 10
+#define MAX_CURL_REUSE_COUNT 4
 using namespace es3;
 
 namespace es3
