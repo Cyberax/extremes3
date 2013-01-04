@@ -40,7 +40,7 @@ curl_ptr_t conn_context::get_curl(const std::string &zone,
 							 const std::string &bucket)
 {
 	guard_t lock(m_);
-    //std::vector<CURL*> &cur = curls_[zone+"/"+bucket];
+    std::vector<CURL*> &cur = curls_[zone+"/"+bucket];
     if (false && !cur.empty())
 	{
 		CURL* res=cur.back();
