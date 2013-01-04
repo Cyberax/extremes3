@@ -191,7 +191,7 @@ namespace es3
 							continue;
 						} else if (code.code()==errWarn)
 						{
-                            VLOG(1) << gettid() << "WARN: " << ex.what();
+                            VLOG(1) << "WARN: [" << pthread_self() << "]" << ex.what();
                             sleep(10);
 							continue;
 						} else
