@@ -2,6 +2,7 @@
 #include <curl/curl.h>
 #include "errors.h"
 
+#define MAX_CURL_REUSE_COUNT 10
 using namespace es3;
 
 namespace es3
@@ -36,6 +37,12 @@ conn_context::~conn_context()
 	reset();
 }
 
+void conn_context::taint(curl_ptr_t ptr)
+{
+    guard_t lock(m_);
+    use_counts_[ptr.get()]=MAX_CURL_REUSE_COUNT+1;
+}
+
 curl_ptr_t conn_context::get_curl(const std::string &zone,
 							 const std::string &bucket)
 {
@@ -48,7 +55,7 @@ curl_ptr_t conn_context::get_curl(const std::string &zone,
         assert(!borrowed_curls_.count(res));
         use_counts_[res]++;
 
-        if (use_counts_[res]>5)
+        if (use_counts_[res]>=MAX_CURL_REUSE_COUNT)
         {
             curl_easy_cleanup(res);
             assert(error_bufs_.count(res));

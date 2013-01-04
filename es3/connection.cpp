@@ -67,6 +67,7 @@ void s3_connection::checked(curl_ptr_t curl, int curl_code)
 		} else
 			err(errWarn) << "curl error: "
 						 << curl_easy_strerror((CURLcode)curl_code);
+        conn_data_->taint(curl);
 	}
 }
 
@@ -77,7 +78,9 @@ void s3_connection::check_for_errors(curl_ptr_t curl,
 	checked(curl,
 			curl_easy_getinfo(curl.get(), CURLINFO_RESPONSE_CODE, &code));
 	if (code<400)
-		return;
+        return;
+
+    conn_data_->taint(curl);
 
 	code_e err_level=errFatal;
 	if (code>=500)

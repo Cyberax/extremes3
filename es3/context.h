@@ -23,6 +23,8 @@ namespace es3 {
 
 		curl_ptr_t get_curl(const std::string &zone,
 					   const std::string &bucket);
+        void taint(curl_ptr_t ptr);
+
 		void reset();
 		char* err_buf_for(curl_ptr_t ptr)
 		{
