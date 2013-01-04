@@ -216,12 +216,51 @@ public:
 	}
 };
 
+class prepare_remote_list : public sync_task
+{
+    context_ptr ctx_;
+    bool do_upload_, delete_mode_;
+
+    const s3_path remote_;
+    std::vector<s3_directory_ptr> &remote_lists_;
+    mutex_t &m_;
+public:
+    prepare_remote_list(context_ptr ctx, bool do_upload, bool delete_mode,
+                        s3_path remote, std::vector<s3_directory_ptr> &remote_lists,
+                        mutex_t &m) :
+        ctx_(ctx), do_upload_(do_upload), delete_mode_(delete_mode),
+        remote_(remote), remote_lists_(remote_lists),
+        m_(m)
+    {
+    }
+
+    virtual void print_to(std::ostream &str)
+    {
+        str << "Preparing " << remote_;
+    }
+
+    virtual void operator()(agenda_ptr agenda)
+    {
+        s3_connection conn(ctx_);
+        s3_directory_ptr cur_root=conn.list_files_shallow(
+                remote_, s3_directory_ptr(), !do_upload_ || delete_mode_);
+
+        for(auto iter=cur_root->subdirs_.begin();
+            iter!=cur_root->subdirs_.end();++iter)
+        {
+            agenda->schedule(sync_task_ptr(
+                                  new list_subdir_task(iter->second, ctx_)));
+        }
+
+        guard_t g(m_);
+        remote_lists_.push_back(cur_root);
+    }
+};
+
 bool synchronizer::create_schedule(bool check_mode, bool delete_mode, 
 								   bool non_recursive_delete)
 {
-	//Retrieve the list of remote files
-	s3_connection conn(ctx_);
-
+	//Retrieve the list of remote files	
 	local_dir_ptr locals;
 	for(auto iter=local_.begin();iter!=local_.end();++iter)
 	{
@@ -235,18 +274,12 @@ bool synchronizer::create_schedule(bool check_mode, bool delete_mode,
 
 	VLOG(1)<<"Preparing S3 file list.";
 	std::vector<s3_directory_ptr> remote_lists;
+    mutex_t m;
 	for(auto iter=remote_.begin();iter!=remote_.end();++iter)
 	{
-		s3_directory_ptr cur_root=conn.list_files_shallow(
-				*iter, s3_directory_ptr(), !do_upload_ || delete_mode);
-
-		for(auto iter=cur_root->subdirs_.begin();
-			iter!=cur_root->subdirs_.end();++iter)
-		{
-			agenda_->schedule(sync_task_ptr(
-								  new list_subdir_task(iter->second, ctx_)));
-		}
-		remote_lists.push_back(cur_root);
+        agenda_->schedule(sync_task_ptr(
+                              new prepare_remote_list(ctx_, do_upload_, delete_mode, *iter,
+                                                      remote_lists, m)));
 	}
 	agenda_->run();
 	VLOG(1)<<"Preparing file list - done.";
