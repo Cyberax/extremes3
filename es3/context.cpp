@@ -7,7 +7,7 @@ using namespace es3;
 namespace es3
 {
 	struct curl_deleter
-	{
+    {
 		conn_context *parent_;
 
 		void operator()(CURL *curl)
@@ -41,29 +41,41 @@ curl_ptr_t conn_context::get_curl(const std::string &zone,
 {
 	guard_t lock(m_);
     std::vector<CURL*> &cur = curls_[zone+"/"+bucket];
-    if (false && !cur.empty())
+    if (!cur.empty())
 	{
 		CURL* res=cur.back();
 		cur.pop_back();
-		assert(!borrowed_curls_.count(res));
-		borrowed_curls_[res]=zone+"/"+bucket;
-		return curl_ptr_t(res, curl_deleter{this});
-	} else
-	{
-		CURL* res=curl_easy_init();
-		if (!res)
-			err(errFatal) << "can't init CURL";
+        assert(!borrowed_curls_.count(res));
+        use_counts_[res]++;
 
-		char *err_buf=(char*)malloc(CURL_ERROR_SIZE+1);
-		memset(err_buf, 0, CURL_ERROR_SIZE+1);
+        if (use_counts_[res]>5)
+        {
+            curl_easy_cleanup(res);
+            assert(error_bufs_.count(res));
+            free(error_bufs_.at(res));
+            error_bufs_.erase(res);
+            use_counts_.erase(res);
+        } else
+        {
+            borrowed_curls_[res]=zone+"/"+bucket;
+            return curl_ptr_t(res, curl_deleter{this});
+        }
+    }
 
-		error_bufs_[res]=err_buf;
-		curl_easy_setopt(res, CURLOPT_ERRORBUFFER, err_buf);
+    CURL* res=curl_easy_init();
+    if (!res)
+        err(errFatal) << "can't init CURL";
 
-		assert(!borrowed_curls_.count(res));
-		borrowed_curls_[res]=zone+"/"+bucket;
-		return curl_ptr_t(res, curl_deleter{this});
-	}
+    char *err_buf=(char*)malloc(CURL_ERROR_SIZE+1);
+    memset(err_buf, 0, CURL_ERROR_SIZE+1);
+
+    error_bufs_[res]=err_buf;
+    use_counts_[res]=1;
+    curl_easy_setopt(res, CURLOPT_ERRORBUFFER, err_buf);
+
+    assert(!borrowed_curls_.count(res));
+    borrowed_curls_[res]=zone+"/"+bucket;
+    return curl_ptr_t(res, curl_deleter{this});
 }
 
 void conn_context::release_curl(CURL* curl)

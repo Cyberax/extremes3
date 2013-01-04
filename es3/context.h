@@ -37,6 +37,7 @@ namespace es3 {
 		std::map<std::string, std::vector<CURL*> > curls_;
 		std::map<CURL*, char*> error_bufs_;
 		std::map<CURL*, std::string> borrowed_curls_;
+        std::map<CURL*, int> use_counts_;
 
 		friend class curl_deleter;
 	};
