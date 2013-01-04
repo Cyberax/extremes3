@@ -61,7 +61,7 @@ int main(int argc, char **argv)
 	//Be verbose by default if controlling terminal is present
 	int def_verbose = isatty(2);
 
-	//Get terminal size (to pretty-print help text)
+	//Get terminal size (to pretty-print help text)	
 	struct winsize w={0};
 	ioctl(0, TIOCGWINSZ, &w);
 	term_width=(w.ws_col==0)? 80 : w.ws_col;
@@ -74,7 +74,7 @@ int main(int argc, char **argv)
 		("help", "Display this message")
 		("config,c", po::value<std::string>(),
 			"Path to a file that contains configuration settings")
-		("verbosity,v", po::value<int>(&verbosity)->default_value(9),
+		("verbosity,v", po::value<int>(&verbosity)->default_value(1),
 			"Verbosity level [0 - the lowest, 9 - the highest]")
 		("no-progress,q", "Quiet mode (no progress indicator)")
 		("no-stats,t", "Quiet mode (no final stats)")
