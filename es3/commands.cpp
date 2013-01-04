@@ -739,6 +739,7 @@ int es3::do_mass_rm(context_ptr context, const stringvec& params,
         }
         if (fail)
             return 2;
+		std::cout << "Deleted "<<path<<std::endl;
     }
 
     return 0;
