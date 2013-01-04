@@ -26,13 +26,14 @@ struct es3::upload_content
 	upload_content() : num_parts_(), num_completed_() {}
 
 	context_ptr conn_;
-	std::string upload_id_;
+    std::string upload_id_;
 	s3_path remote_;
 
 	mutex_t lock_;
 	size_t num_parts_;
 	size_t num_completed_;
-	std::vector<std::string> etags_;
+    std::vector<std::string> etags_;
+    header_map_t hmap_;
 };
 
 class part_upload_task : public sync_task
@@ -58,6 +59,17 @@ public:
 		VLOG(2) << "Starting upload of a part " << num_ << " of "
 				<< content_->remote_;
 
+        bool needs_upload_id=content_->num_parts_>1;
+        if (needs_upload_id)
+        {
+            guard_t g(content_->lock_);
+            if (content_->upload_id_.empty())
+            {
+                s3_connection up_prep(content_->conn_);
+                content_->upload_id_=up_prep.initiate_multipart(content_->remote_, content_->hmap_);
+            }
+        }
+
 		struct sched_param param;
 		param.sched_priority = 1+num_*90/content_->num_parts_;
 		pthread_setschedparam(pthread_self(), SCHED_RR, &param);
@@ -80,7 +92,7 @@ public:
 				<< ", total=" << content_->num_parts_
 				<< ", sent=" << content_->num_completed_ << ".";
 
-		if (content_->num_completed_ == content_->num_parts_)
+        if (content_->num_completed_ == content_->num_parts_ && !content_->upload_id_.empty())
 		{
 			VLOG(2) << "Assembling "<< content_->remote_ <<".";
 			//We've completed the upload!
@@ -245,9 +257,8 @@ void file_uploader::operator()(agenda_ptr agenda)
 		hmap["Content-Encoding"] = "gzip";
 	hmap["x-amz-meta-last-modified"] = int_to_string(mtime);
 	hmap["x-amz-meta-size"] = int_to_string(file_sz);
-	hmap["x-amz-meta-file-mode"] = int_to_string(mode);
-	s3_connection up_prep(conn_);
-	up_data->upload_id_=up_prep.initiate_multipart(remote_, hmap);
+	hmap["x-amz-meta-file-mode"] = int_to_string(mode);	
+    up_data->hmap_=hmap;
 
 	if (do_compress)
 	{

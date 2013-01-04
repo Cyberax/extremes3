@@ -74,7 +74,7 @@ int main(int argc, char **argv)
 		("help", "Display this message")
 		("config,c", po::value<std::string>(),
 			"Path to a file that contains configuration settings")
-		("verbosity,v", po::value<int>(&verbosity)->default_value(1),
+		("verbosity,v", po::value<int>(&verbosity)->default_value(9),
 			"Verbosity level [0 - the lowest, 9 - the highest]")
 		("no-progress,q", "Quiet mode (no progress indicator)")
 		("no-stats,t", "Quiet mode (no final stats)")

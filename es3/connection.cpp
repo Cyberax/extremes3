@@ -489,8 +489,11 @@ std::string s3_connection::upload_data(const s3_path &path, const std::string &u
 	buf_data read_data(data, size);
 
     s3_path fin_path=path;
-    if (part_num>0)
+    if (!upload_id.empty())
+    {
+        assert(part_num>0);
         fin_path.path_+=std::string("?partNumber=")+int_to_string(part_num)+"&uploadId="+upload_id;
+    }
 
 	curl_ptr_t curl=conn_data_->get_curl(path.zone_, path.bucket_);
     prepare(curl, "PUT", fin_path, opts);
@@ -516,7 +519,7 @@ std::string s3_connection::upload_data(const s3_path &path, const std::string &u
 			strcasecmp(etag.c_str(), ("\""+read_data.get_md5()+"\"").c_str()))
 		abort(); //Data corruption. This SHOULD NOT happen!
 
-    if (part_num!=0 && !upload_id.empty())
+    if (!upload_id.empty())
     {
 		s3_path chk_path=path;
 		chk_path.path_ += std::string("?uploadId=")+upload_id;
