@@ -579,7 +579,8 @@ std::string s3_connection::initiate_multipart(
 		err(errWarn) << "Incorrect document format - no upload ID";	
     std::string uploadId=node->Value();
 
-    std::string cur_uploads=read_fully("GET", up_path, "", opts);
+    //Validate that the upload is created
+    std::string cur_uploads=read_fully("GET", up_path);
     TiXmlDocument cur_uploads_xml;
     cur_uploads_xml.Parse(cur_uploads.c_str());
     if (cur_uploads_xml.Error())
