@@ -59,8 +59,8 @@ public:
 		VLOG(2) << "Starting upload of a part " << num_ << " of "
 				<< content_->remote_;
 
-        bool needs_upload_id=content_->num_parts_>1;
-        if (needs_upload_id)
+        bool is_multipart=content_->num_parts_>1;
+        if (is_multipart)
         {
             guard_t g(content_->lock_);
             if (content_->upload_id_.empty())
@@ -77,8 +77,8 @@ public:
 		s3_path part_path=content_->remote_;
 		s3_connection up(content_->conn_);
         std::string etag=up.upload_data(part_path, content_->upload_id_, num_+1,
-										&segment_->data_[0],
-										segment_->data_.size());
+                &segment_->data_[0], segment_->data_.size(),
+                is_multipart?header_map_t():content_->hmap_);
 		assert(!etag.empty());
 		agenda->add_stat_counter("uploaded", segment_->data_.size());
 
