@@ -558,6 +558,23 @@ bool s3_connection::check_part(const std::string &ans, int part_num)
     return true;
 }
 
+std::string lexioprev(const std::string &cur)
+{
+    std::string res=cur;
+    for(auto iter=res.rbegin(); iter!=res.rend();++iter)
+    {
+        char ch=*iter;
+        ch--;
+        if (ch>=',')
+        {
+            *iter=ch;
+            break;
+        } else
+            *iter='z';
+    }
+    return res;
+}
+
 std::string s3_connection::initiate_multipart(
 	const s3_path &path, const header_map_t &opts)
 {
@@ -582,6 +599,7 @@ std::string s3_connection::initiate_multipart(
     //Validate that the upload is created
     s3_path all_paths=path;
     all_paths.path_="/?uploads";
+    header_map_t opts;
     std::string cur_uploads=read_fully("GET", all_paths);
     TiXmlDocument cur_uploads_xml;
     cur_uploads_xml.Parse(cur_uploads.c_str());
@@ -596,7 +614,7 @@ std::string s3_connection::initiate_multipart(
     while(cur_node)
     {
         TiXmlHandle upHandle(cur_node);
-        std::string val=upHandle.FirstChild("UploadId").ToText()->ValueStr();
+        std::string val=upHandle.FirstChild("UploadId").FirstChild().ToText()->ValueStr();
         std::cerr<<"Val "<< val<<std::endl;
         if (val==uploadId)
             return uploadId;
