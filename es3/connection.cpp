@@ -599,8 +599,8 @@ std::string s3_connection::initiate_multipart(
     //Validate that the upload is created
     s3_path all_paths=path;
     all_paths.path_="/?uploads";
-    header_map_t opts;
-    std::string cur_uploads=read_fully("GET", all_paths);
+    std::string cur_uploads=read_fully("GET", all_paths, "&prefix="+path.path_.substr(1));
+//	std::cerr << cur_uploads << std::endl;
     TiXmlDocument cur_uploads_xml;
     cur_uploads_xml.Parse(cur_uploads.c_str());
     if (cur_uploads_xml.Error())
@@ -615,7 +615,7 @@ std::string s3_connection::initiate_multipart(
     {
         TiXmlHandle upHandle(cur_node);
         std::string val=upHandle.FirstChild("UploadId").FirstChild().ToText()->ValueStr();
-        std::cerr<<"Val "<< val<<std::endl;
+//        std::cerr<<"Val "<< val<<std::endl;
         if (val==uploadId)
             return uploadId;
 
