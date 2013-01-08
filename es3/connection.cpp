@@ -600,7 +600,6 @@ std::string s3_connection::initiate_multipart(
     s3_path all_paths=path;
     all_paths.path_="/?uploads";
     std::string cur_uploads=read_fully("GET", all_paths, "&prefix="+path.path_.substr(1));
-//	std::cerr << cur_uploads << std::endl;
     TiXmlDocument cur_uploads_xml;
     cur_uploads_xml.Parse(cur_uploads.c_str());
     if (cur_uploads_xml.Error())

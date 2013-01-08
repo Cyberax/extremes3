@@ -283,21 +283,27 @@ int es3::do_cat(context_ptr context, const stringvec& params,
 		s3_connection conn(context);
 		std::string region=conn.find_region(remote.bucket_);
 		remote.zone_=region;
-				
-		sync_task_ptr task(new file_downloader(context, tmp_nm, remote, false));	
-		ag->schedule(task);
-		size_t failed=ag->run();
-		if (failed)
-			return 6;
-		
-		if (ag->tasks_count())
-		{
-			ag->print_epilog(); //Print stats, so they're at least visible
-			std::cerr << "ERR: ";
-			ag->print_queue();
-			return 4;
-		}
-		
+
+        size_t failed;
+        for (int f=0;f<6;++f)
+        {
+            sync_task_ptr task(new file_downloader(context, tmp_nm, remote, false));
+            ag->schedule(task);
+            failed=ag->run();
+            if (!failed)
+                break;
+        }
+
+        if (ag->tasks_count())
+        {
+            ag->print_epilog(); //Print stats, so they're at least visible
+            std::cerr << "ERR: ";
+            ag->print_queue();
+            return 4;
+        }
+        if (failed)
+            return 6;
+
 		handle_t fl(open(tmp_nm.c_str(), O_RDWR) 
 					| libc_die2("Failed to open "+tmp_nm.string()));
 		
