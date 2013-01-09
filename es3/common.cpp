@@ -16,6 +16,11 @@ using namespace es3;
 static int global_verbosity_level = 0;
 mutex_t logger_lock_;
 
+mutex_t& es3::get_logger_lock()
+{
+    return logger_lock_;
+}
+
 es3::logger::logger(int lvl)
 	: verbosity_(lvl), stream_(new std::ostringstream())
 {

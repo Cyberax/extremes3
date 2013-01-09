@@ -648,10 +648,12 @@ public:
             agenda->schedule(sync_task_ptr(
                                   new print_subdir_task(iter->second->absolute_name_, ctx_, result_, included_, excluded_)));
         }
+
+        guard_t out_guard(get_logger_lock());
         for(auto iter=ptr->files_.begin(); iter!=ptr->files_.end();++iter)
         {
             s3_path remote_name = iter->second->absolute_name_;
-            file_desc mod=conn.find_mtime_and_size(remote_name);
+            file_desc mod=conn.find_mtime_and_size(remote_name);            
             std::cout << mod.mtime_
                       << "\t"<< mod.raw_size_
                       << "\t" << remote_name << std::endl;

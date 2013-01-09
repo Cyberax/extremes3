@@ -80,6 +80,7 @@ namespace es3 {
 		}
 	};
 
+    mutex_t& get_logger_lock();
 	#define VLOG(lev) if(es3::logger::is_log_on(lev)) es3::logger(lev)
 
 	class handle_t
