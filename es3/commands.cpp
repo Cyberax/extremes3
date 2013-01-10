@@ -673,7 +673,7 @@ int es3::do_lsr(context_ptr context, const stringvec& params,
         return 4;
     }
 
-    std::cout<<"Total files listed: " << num << std::endl;
+    std::cerr<<"Total files listed: " << num << std::endl;
     return 0;
 }
 
