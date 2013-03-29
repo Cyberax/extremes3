@@ -44,7 +44,7 @@ s3_path es3::parse_path(const std::string &url)
 }
 
 s3_connection::s3_connection(const context_ptr &conn_data)
-	: conn_data_(conn_data), header_list_()
+    : conn_data_(conn_data), header_list_(), num_lists_()
 {
 }
 
@@ -263,9 +263,25 @@ static std::string extract_leaf(const std::string &path)
 	return path.substr(idx+1);
 }
 
+static void decrement(int *ptr, mutex_t *mtx, boost::condition_variable *cv)
+{
+    u_guard_t lock(*mtx);
+    (*ptr)--;
+    cv->notify_all();
+}
+
 s3_directory_ptr s3_connection::list_files_shallow(const s3_path &path,
 	s3_directory_ptr target, bool try_to_root)
-{
+{            
+    {
+        const int num_reqs = conn_data_->concurrent_list_req_;
+        u_guard_t lock(parallel_req_mutex_);
+        while(num_reqs>0 && num_lists_>num_reqs)
+            num_parallel_reqs_.wait(lock);
+        num_lists_++;
+    }
+    ON_BLOCK_EXIT(&decrement, &num_lists_, &parallel_req_mutex_, &num_parallel_reqs_);
+
 	if (!target)
 	{
 		target=s3_directory_ptr(new s3_directory());

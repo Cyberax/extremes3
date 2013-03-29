@@ -16,9 +16,10 @@ namespace es3 {
 	public:
 		bf::path scratch_dir_;
 		bool use_ssl_, do_compression_;
-		std::string api_key_, secret_key;
+        std::string api_key_, secret_key;
+        int concurrent_list_req_;
 
-		conn_context() : use_ssl_(), do_compression_(true) {};
+        conn_context() : use_ssl_(), do_compression_(true), concurrent_list_req_(-1) {};
 		~conn_context();
 
 		curl_ptr_t get_curl(const std::string &zone,

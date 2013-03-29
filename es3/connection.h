@@ -87,7 +87,11 @@ namespace es3 {
 	{
 		const context_ptr conn_data_;
 		struct curl_slist *header_list_;
-	public:
+
+        boost::condition_variable num_parallel_reqs_;
+        boost::mutex parallel_req_mutex_;
+        int num_lists_;
+    public:
 		s3_connection(const context_ptr &conn_data);
 		~s3_connection();
 

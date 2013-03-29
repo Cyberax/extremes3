@@ -98,13 +98,15 @@ int main(int argc, char **argv)
 			"Use SSL for communications with the Amazon S3 servers")
 		("compression,m", po::value<bool>(
 			 &cd->do_compression_)->default_value(true)->required(),
-			"Use GZIP compression")
+			"Use GZIP compression")       
 	;
 	generic.add(access);
 
 	int thread_num=0, io_threads=0, cpu_threads=0, segment_size=0, segments=0;
 	po::options_description tuning("Tuning", term_width);
 	tuning.add_options()
+        ("concurrent-list,t", po::value<int>(&cd->concurrent_list_req_)->default_value(2),
+            "Number of concurrent LIST requests [0 - unlimited]")
 		("thread-num,n", po::value<int>(&thread_num)->default_value(0),
 			"Number of download/upload threads used [0 - autodetect]")
 		("reader-threads,r", po::value<int>(
